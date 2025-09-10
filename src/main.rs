@@ -1,3 +1,4 @@
+use ndk_glue::Event;
 use macroquad::prelude::*;
 
 struct Clicker {
