@@ -7,6 +7,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # Указываем путь к NDK, который УЖЕ есть в ubuntu-latest
+  ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/25.1.8937393
 
 jobs:
   build:
@@ -15,21 +17,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Android NDK
-        uses: ReactiveCircus/android-ndk@v2
-        with:
-          ndk-version: '25.1.8937393'
+      - name: Setup Android SDK (чтобы активировать NDK)
+        uses: android-actions/setup-android@v3
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@master
         with:
           targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
 
-      - name: Install cargo-apk
-        run: cargo install cargo-apk
+      - name: Install cargo-apk and cargo-ndk
+        run: |
+          cargo install cargo-apk
+          cargo install cargo-ndk
+
+      - name: Verify NDK
+        run: |
+          echo "NDK path: $ANDROID_NDK_HOME"
+          ls -la $ANDROID_NDK_HOME
 
       - name: Build APK
         run: |
+          export PATH="$ANDROID_NDK_HOME:$PATH"
+          cargo ndk -t armeabi-v7a -t arm64-v8a build --release
           cargo apk build --release
 
       - name: Upload APK
