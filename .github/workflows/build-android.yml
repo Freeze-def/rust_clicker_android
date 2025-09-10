@@ -1,0 +1,39 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: '25.x.x'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
+
+      - name: Install cargo-apk
+        run: cargo install cargo-apk
+
+      - name: Build APK
+        run: |
+          cargo apk build --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: rust-clicker-apk
+          path: target/android/release/*.apk
